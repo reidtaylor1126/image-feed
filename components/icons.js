@@ -1,0 +1,17 @@
+export const icons = {
+    like: 'https://cdn.discordapp.com/attachments/780884894972379168/821154227896188938/heart.png',
+    like_full: 'https://cdn.discordapp.com/attachments/780884894972379168/823614853645205544/heart-full.png',
+    comment: 'https://cdn.discordapp.com/attachments/780884894972379168/821154229367472167/msg-bubble-2.png',
+    save: 'https://cdn.discordapp.com/attachments/780884894972379168/822954965659680788/save-2.png',
+    share: 'https://cdn.discordapp.com/attachments/780884894972379168/821154232702468146/share.png',
+    saved: 'https://cdn.discordapp.com/attachments/780884894972379168/821157810117017610/filing.png',
+    home: 'https://cdn.discordapp.com/attachments/780884894972379168/821460030049353829/home-2.png',
+    profile: 'https://cdn.discordapp.com/attachments/780884894972379168/821461591299719229/profile.png',
+    post: 'https://cdn.discordapp.com/attachments/780884894972379168/821462729399205958/plus-circle.png',
+    up_arrow: 'https://cdn.discordapp.com/attachments/780884894972379168/823026545270194196/arrow_up.png',
+    exit: 'https://cdn.discordapp.com/attachments/780884894972379168/823654276211277834/x.png',
+    send: 'https://cdn.discordapp.com/attachments/780884894972379168/823760947956678716/send.png',
+    menu: 'https://cdn.discordapp.com/attachments/780884894972379168/823953263610036264/three-dots-v.png',
+    check: 'https://cdn.discordapp.com/attachments/780884894972379168/823986426529054780/check.png',
+    blankImg: 'https://cdn.discordapp.com/attachments/798700889384550402/824769233690820641/blank-checker.png',
+  }

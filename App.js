@@ -4,47 +4,11 @@ import Slider from '@react-native-community/slider'
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 
-let light = 
-  {
-    font: 'Roboto',
-    statusBarStyle: 'dark-content',
-    background: '#ffffff',
-    background2: '#ffffff',
-    outline: '#dddddd',
-    onBackground: '#181818',
-    onBackground2: '#aaaaaa',
-    accent: '#eecc77',
-    onAccent: '#181818',
-    accent2: '#ff66aa'
-  };
-
-let oled_dark = 
-  {
-    font: 'Roboto',
-    statusBarStyle: 'light-content',
-    background: '#000000',
-    background2: '#000000',
-    outline: '#000000',
-    onBackground: '#ffffff',
-    onBackground2: '#ffffff',
-    accent: '#f0c855',
-    onAccent: '#000000',
-    accent2: '#ff2255'
-  }
-
-let slate =
-  {
-    font: 'monospace',
-    statusBarStyle: 'light-content',
-    background: '#383b47',
-    background2: '#282b37',
-    outline: '#20222f',
-    onBackground: '#ffffff',
-    onBackground2: '#dddddd',
-    accent: '#55bb99',
-    onAccent: '#20222f',
-    accent2: '#dd2255'
-  };
+import CreatePost from './components/createPost';
+import Feed from './components/feed';
+import { GenerateStyles as generateStyles } from './components/styles';
+import icons from './components/icons'
+import { light } from './components/themes'
 
 let imgscale = 2;
 let pageRange = 30;
@@ -52,23 +16,6 @@ let postsOnPage = 10;
 let maxPosts = 20;
 let scrollButtonThreshold = 6;
 let theme = light;
-let icons = {
-  like: 'https://cdn.discordapp.com/attachments/780884894972379168/821154227896188938/heart.png',
-  like_full: 'https://cdn.discordapp.com/attachments/780884894972379168/823614853645205544/heart-full.png',
-  comment: 'https://cdn.discordapp.com/attachments/780884894972379168/821154229367472167/msg-bubble-2.png',
-  save: 'https://cdn.discordapp.com/attachments/780884894972379168/822954965659680788/save-2.png',
-  share: 'https://cdn.discordapp.com/attachments/780884894972379168/821154232702468146/share.png',
-  saved: 'https://cdn.discordapp.com/attachments/780884894972379168/821157810117017610/filing.png',
-  home: 'https://cdn.discordapp.com/attachments/780884894972379168/821460030049353829/home-2.png',
-  profile: 'https://cdn.discordapp.com/attachments/780884894972379168/821461591299719229/profile.png',
-  post: 'https://cdn.discordapp.com/attachments/780884894972379168/821462729399205958/plus-circle.png',
-  up_arrow: 'https://cdn.discordapp.com/attachments/780884894972379168/823026545270194196/arrow_up.png',
-  exit: 'https://cdn.discordapp.com/attachments/780884894972379168/823654276211277834/x.png',
-  send: 'https://cdn.discordapp.com/attachments/780884894972379168/823760947956678716/send.png',
-  menu: 'https://cdn.discordapp.com/attachments/780884894972379168/823953263610036264/three-dots-v.png',
-  check: 'https://cdn.discordapp.com/attachments/780884894972379168/823986426529054780/check.png',
-  blankImg: 'https://cdn.discordapp.com/attachments/798700889384550402/824769233690820641/blank-checker.png',
-}
 
 let gesturebar = Device.brand == 'google' ? 20 : 0;
 let headerHeight = 0.09;
@@ -77,6 +24,8 @@ let deviceHeight = Dimensions.get('window').height + statusBarHeight - gestureba
 let deviceWidth = Dimensions.get('window').width;
 StatusBar.setBarStyle(theme.statusBarStyle);
 StatusBar.setBackgroundColor(theme.background2);
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default class App extends Component {
 
@@ -390,44 +339,24 @@ export default class App extends Component {
       this.toPage('profile');
     }
 
-    _changeImage = (img) => {
-        this.setState({imgTemp: img});
-    }
-
-    _changeTitle = (title) => {
-        this.setState({titleTemp: title});
-    }
-
-    confirmPost = () => {
-      if(this.state.imgTemp != "" && this.state.titleTemp != "") {
+    confirmPost = (postData, callback) => {
+      if(postData.imgTemp != "" && postData.titleTemp != "") {
         let post = {
-          src: {uri: this.state.imgTemp},
+          src: {uri: postData.imgTemp},
           usr: this.state.user,
-          ratio: this.state.ratioTemp,
+          ratio: postData.ratioTemp,
           id: this.state.user.posts.length + this.state.titleTemp,
           likedBy: [],
           baseLikes: 0,
-          caption: this.state.titleTemp,
-          comments: [{user: this.state.user, comment: this.state.titleTemp, id: "0"}]
+          caption: postData.titleTemp,
+          comments: [{user: this.state.user, comment: postData.titleTemp, id: "0"}]
         }
 
         this.state.user.posts.unshift(post);
         this.state.images.unshift(post);
         this.toPage('feed');
-        this.clearPost();
+        () => {callback()}
       }
-    }
-
-    clearPost = () => {
-      this.setState({
-        imgTemp: "",
-        titleTemp: "",
-        ratioTemp: 1,
-      })
-    }
-
-    _handleSlider = (value) => {
-      this.setState({ratioTemp: value});
     }
 
     PostList = (props) => {
@@ -447,144 +376,32 @@ export default class App extends Component {
               <View style={{height: deviceHeight*headerHeight}}></View>
 
               {/** Main Feed Page */}
-              <View style={{display: this.state.pageDisplay.feed}}>
-                <FlatList 
-                    ref={this.feedList}
-                    style={{height: deviceHeight*(1-(headerHeight + 0.07))}}
-                    onScroll={this._handleScroll}
-                    data={this.state.images}
-                    refreshControl={
-                      <RefreshControl
-                          progressBackgroundColor={theme.accent}
-                          colors={[theme.onAccent]}
-                          refreshing={this.state.isLoading || this.state.isRefreshing}
-                          onRefresh={() => {this.fetchImages()}}
-                      />
-                    }
-                    renderItem={({item, index}) => {
-                      let title = item.caption + " - " + item.usr.name;
-                      return(
-                        <View style={[styles.item]} key={index}>
-                            <Text style={styles.postTitle}>
-                                {title}
-                            </Text>
-              
-                            <Image
-                                source={item.src}
-                                style={{width: deviceWidth, height: deviceWidth*item.ratio, backgroundColor: theme.outline}}
-                            />
-                            
-                            <View style={[styles.postControlBar, {marginLeft: deviceWidth*0.025}]}>
-                                <Pressable 
-                                    style={styles.icon}
-                                    activeOpacity={1}
-                                    onPress={() => {this.likePost(item)}}>
-                                  <Image
-                                    source={{uri: icons.like}}
-                                    style={[styles.icon, {tintColor: item.likedBy.includes(this.state.user) ? theme.accent : theme.onBackground2}]}
-                                  />
-                                </Pressable>
-                                <Pressable 
-                                    style={styles.icon}
-                                    activeOpacity={1}
-                                    onPress={() => {this.comments(item)}}>
-                                  <Image
-                                    source={{uri: icons.comment}}
-                                    style={styles.icon}
-                                  />
-                                </Pressable>
-                                <View style={{width: (deviceWidth*1.075) - (deviceHeight * 0.3)}}></View>
-                                <Pressable 
-                                    style={styles.icon}
-                                    activeOpacity={1}
-                                    onPress={() => {this.savePost(item)}}>
-                                  <Image
-                                    source={{uri: icons.save}}
-                                    style={[styles.icon, {tintColor: this.state.user.saved.includes(item) ? theme.accent : theme.onBackground2}]}
-                                  />
-                                </Pressable>
-                                <Pressable 
-                                    style={styles.icon}
-                                    activeOpacity={1}
-                                    onPress={() => {this.sharePost(item)}}>
-                                  <Image
-                                    source={{uri: icons.share}}
-                                    style={styles.icon}
-                                  />
-                                </Pressable>
-                            </View>
-              
-                        </View>
-                      );
-                    }}
-                />
-              </View>
+              <Feed 
+                  pageDisplay={this.state.pageDisplay}
+                  feedList={this.feedList}
+                  images={this.state.images}
+                  theme={theme}
+                  isLoading={this.state.isLoading}
+                  isRefreshing={this.state.isRefreshing}
+                  user={this.state.user}
+
+                  comments={this.comments}
+                  savePost={this.savePost}
+                  sharePost={this.sharePost}
+                  likePost={this.likePost}
+                  fetchImages={this.fetchImages}
+                  onScroll={this._handleScroll}
+              />
 
               {/** Create Post page */}
-              <View style={{display: this.state.pageDisplay.post}}>
-                <View style={{width: deviceWidth, height: deviceWidth, alignItems: 'center', justifyContent: 'center'}}>
-                  <Image
-                    source={{uri: this.state.imgTemp == "" ? icons.blankImg : this.state.imgTemp}}
-                    style={{height: deviceWidth*(Math.min(1, this.state.ratioTemp)), width: deviceWidth*Math.min(1, 1/this.state.ratioTemp)}}
-                  />
-                </View>
-                <View style={{backgroundColor: theme.background2, width: deviceWidth, height: deviceHeight, elevation: 12, position: 'absolute', top: deviceWidth + (this.state.postTop*0.5)*deviceHeight}}>
-                    <View style={{elevation: 12, height: deviceHeight*0.075, alignItems: 'center', color: theme.background2, flexDirection: 'row', justifyContent: 'center', }}>
-                      <Text style={[styles.smallText, {width: deviceWidth*0.15, marginRight: 0}]}>
-                        Source: 
-                      </Text>
-                      <TextInput style={[styles.smallText, {width: deviceWidth*0.7, borderBottomColor: theme.onBackground2, borderBottomWidth: deviceHeight*0.002,}]}
-                          value={this.state.imgTemp}
-                          onChangeText={(url) => this._changeImage(url)}
-                      />
-                    </View>
-                    <View style={{elevation: 12, height: deviceHeight*0.075, alignItems: 'center', color: theme.background2, flexDirection: 'row', justifyContent: 'center'}}>
-                      <Text style={[styles.smallText, {width: deviceWidth*0.15, marginRight: 0}]}>
-                        Title: 
-                      </Text>
-                      <TextInput style={[styles.smallText, {width: deviceWidth*0.7, borderBottomColor: theme.onBackground2, borderBottomWidth: deviceHeight*0.002,}]}
-                          value={this.state.titleTemp}
-                          onChangeText={(text) => this._changeTitle(text)}
-                      />
-                    </View>
-                    <View style={{elevation: 12, height: deviceHeight*0.075, alignItems: 'center', color: theme.background2, flexDirection: 'row', justifyContent: 'center'}}>
-                      <Text style={[styles.smallText, {width: deviceWidth*0.2, marginRight: 0}]}>
-                        Aspect Ratio: 
-                      </Text>
-                      <Slider
-                        style={{width: deviceWidth*0.7, height: deviceHeight*0.05}}
-                        value={1}
-                        minimumValue={0.5}
-                        maximumValue={2}
-                        minimumTrackTintColor={theme.onBackground}
-                        maximumTrackTintColor={theme.onBackground2}
-                        thumbTintColor={theme.accent}
-                        onValueChange={(value) => {this._handleSlider(value)}}
-                      />
-                    </View>
-                    <View style={{elevation: 12, height: deviceHeight*0.075, alignItems: 'center', color: theme.background2, flexDirection: 'row', justifyContent: 'space-evenly'}}>
-                      <Pressable
-                        activeOpacity={1}
-                        onPressOut={() => {this.confirmPost()}}
-                      >
-                        <Image
-                          source={{uri: icons.send}}
-                          style={[styles.icon, {tintColor: this.state.imgTemp != "" && this.state.titleTemp != "" ? theme.accent : theme.onBackground2}]}
-                        />
-                      </Pressable>
+              <CreatePost
+                  pageDisplay={this.state.pageDisplay}
+                  dimensions={{width: deviceWidth, height: deviceHeight}}
+                  theme={theme}
+                  postTop={this.state.postTop}
 
-                      <Pressable
-                        activeOpacity={1}
-                        onPressOut={() => {this.clearPost()}}
-                      >
-                        <Image
-                          source={{uri: icons.exit}}
-                          style={[styles.icon, {tintColor: theme.accent2}]}
-                        />
-                      </Pressable>
-                    </View>
-                </View>
-              </View>
+                  confirmPost={this.confirmPost}
+              />
 
               {/** Saved page */}
               <View style={{display: this.state.pageDisplay.saved}}>
@@ -775,17 +592,6 @@ export default class App extends Component {
                         style={[styles.pfpSmall, {marginBottom: deviceHeight*0.01}]}
                       />
                     </Pressable>
-                    {/**
-                     * 
-                    <Pressable
-                        onPress={() => {this.toggleThemes()}}
-                    >
-                      <Image
-                        source={{uri: icons.menu}}
-                        style={[styles.icon, {width: deviceWidth*0.02}]}
-                      />
-                    </Pressable>
-                     */}
                   </View>
               </View>
 
@@ -961,109 +767,4 @@ export default class App extends Component {
     }
 }
 
-let styles = StyleSheet.create({
-    container: {
-        height: deviceHeight,
-        width: deviceWidth,
-        backgroundColor: theme.background
-    },
-    profileHeader: {
-        width: deviceWidth,
-        height: deviceHeight*(1-headerHeight)*0.3,
-        alignItems: 'center',
-        marginBottom: deviceHeight*0.05,
-    },
-    headerBar: {
-        height: deviceHeight*headerHeight,
-        width: deviceWidth,
-        backgroundColor: theme.background2,
-        flexDirection: 'row',
-        position: 'absolute',
-        top: 0,
-        elevation: 15,
-        alignItems: 'flex-end',
-        justifyContent: 'space-between',
-    },
-    headerText: {
-        fontFamily: theme.font,
-        fontSize: deviceHeight*0.035,
-        color: theme.onBackground,
-        margin:deviceHeight*0.005,
-        marginLeft: deviceWidth*0.02,
-    },
-    navbar: {
-        height: deviceHeight*0.07,
-        width: deviceWidth,
-        backgroundColor: theme.background2,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-evenly',
-        position: 'absolute',
-        bottom: 0,
-        elevation: 15,
-        borderColor: theme.outline,
-        borderWidth: deviceHeight*0.002
-    },
-    item: {
-        backgroundColor: theme.background2,
-        width: deviceWidth,
-        marginBottom: deviceHeight*0.005
-    },
-    postTitle: {
-        fontFamily: theme.font,
-        fontSize: deviceHeight*0.025,
-        color: theme.onBackground,
-        margin:deviceHeight*0.005,
-        marginLeft: deviceWidth*0.02,
-    },
-    postControlBar: {
-        width: deviceWidth, 
-        height: deviceHeight*0.06,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    icon: {
-        width: deviceHeight*0.05,
-        height: deviceHeight*0.05,
-        marginRight: deviceWidth*0.025,
-        tintColor: theme.onBackground2
-    },
-    pfpLarge: {
-        height: deviceWidth*0.4,
-        width: deviceWidth*0.4,
-        marginTop: deviceHeight*0.025,
-        borderRadius: deviceWidth*0.2
-    },
-    pfpSmall: {
-      width: deviceHeight*0.04,
-      height: deviceHeight*0.04,
-      marginRight: deviceWidth*0.025,
-      borderRadius: deviceHeight*0.02
-    },
-    toTopButton: {
-        width: deviceWidth*0.12,
-        height: deviceWidth*0.12,
-        backgroundColor: theme.accent,
-        borderRadius: deviceWidth*0.06,
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'absolute',
-        right: deviceWidth*0.025,
-        bottom: deviceHeight*0.12,
-        elevation: 15,
-    },
-    smallText: {
-        width: deviceWidth*0.9,
-        fontFamily: theme.font,
-        color: theme.onBackground,
-        fontSize: deviceHeight*0.02,
-        marginHorizontal: deviceWidth*0.025,
-        flexWrap: 'wrap'
-    },
-    listItem: {
-      width: deviceWidth*0.5,
-      height: deviceHeight*0.035,
-      backgroundColor: theme.background2,
-      marginTop: -1
-    }
-});
+let styles = generateStyles(deviceHeight, deviceWidth, theme);
